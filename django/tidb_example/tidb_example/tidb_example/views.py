@@ -34,7 +34,7 @@ class OrderView(View):
         if id is None:
             orders = list(Orders.objects.values())
         else:
-            orders = list(Orders.objects.filter(id=id).values())
+            orders = list(Orders.objects.filter(oid=id).values())
         return JsonResponse(orders, safe=False)
 
 
@@ -42,9 +42,9 @@ class OrderView(View):
     @atomic
     def post(self, request, *args, **kwargs):
         form_data = json.loads(request.body.decode())
-        username = form_data['username']
+        uid = form_data['uid']
         price = form_data['price']
-        c = Orders(username=username, price=price)
+        c = Orders(uid=uid, price=price)
         c.save()        
         return HttpResponse(status=200)
 
@@ -54,4 +54,47 @@ class OrderView(View):
         if id is None:
             return HttpResponse(status=404)
         Orders.objects.filter(id=id).delete()
+        return HttpResponse(status=200)
+
+    @retry_on_exception
+    @atomic
+    def put(self, request, id=None, *args, **kwargs):
+        if id is None:
+            return HttpResponse(status=404)
+        form_data = json.loads(request.body.decode())
+        price = form_data['price']
+        Orders.objects.filter(id=id).update(price=price)
+        return HttpResponse(status=200)
+
+    @retry_on_exception
+    @atomic
+    def patch(self, request, id=None, *args, **kwargs):
+        if id is None:
+            return HttpResponse(status=404)
+        form_data = json.loads(request.body.decode())
+        price = form_data['price']
+        Orders.objects.filter(id=id).update(price=price)
+        return HttpResponse(status=200)
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+class UserView(View):
+    def get(self, request, id=None, *args, **kwargs):
+        if id is None:
+            return HttpResponse(status=404)
+        users = list(Users.objects.filter(uid=id).values())
+        return JsonResponse(users, safe=False)
+
+    def delete(self, request, id=None, *args, **kwargs):
+        if id is None:
+            return HttpResponse(status=404)
+        Users.objects.filter(uid=id).delete()
+        return HttpResponse(status=200)
+
+    def post(self, request, *args, **kwargs):
+        form_data = json.loads(request.body.decode())
+        name = form_data['name']
+        gender = form_data['gender']
+        c = Users(name=name, gender=gender)
+        c.save()
         return HttpResponse(status=200)

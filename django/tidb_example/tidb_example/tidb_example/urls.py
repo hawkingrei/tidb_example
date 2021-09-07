@@ -17,13 +17,15 @@ from django.contrib import admin
 from django.urls import path
 from django.conf.urls import url
 
-from .views import OrderView, PingView
+from .views import OrderView, PingView, UserView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
 
     url('ping/', PingView.as_view()),
 
-    url('order/', OrderView.as_view(), name='order'),
+    url('order', OrderView.as_view(), name='order'),
     url('order/<int:id>/', OrderView.as_view(), name='order'),
+
+     url('user/<int:id>/', UserView.as_view(), name='user'),
 ]
