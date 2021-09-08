@@ -2,19 +2,19 @@ from sqlalchemy import Column, Integer, String, Float, ForeignKey, create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
-import enum;
+import enum
 engine = create_engine(
     'tidb://root:@127.0.0.1:4000/test_sqlalchemy?charset=utf8mb4',
-    echo=False)
+    echo=True)
 
 # The base class which our objects will be defined on.
 Base = declarative_base()
 
-# Our User object, mapped to the 'users' table
 
 class Gender(enum.Enum):
     Female = 1
     Male = 2
+
 
 class User(Base):
     __tablename__ = 'users'
@@ -25,6 +25,7 @@ class User(Base):
     def __repr__(self):
         return "<User(name='%s', gender='%s')>" % (
             self.name, self.gender)
+
 
 class Order(Base):
     __tablename__ = 'orders'
@@ -50,9 +51,9 @@ session = Session()
 
 # insert users into the database
 session.add_all([
-    User(name='Alice', gender = Gender.Female),
-    User(name='Peter', gender = Gender.Male),
-    User(name='Ben', gender = Gender.Male),
+    User(name='Alice', gender=Gender.Female),
+    User(name='Peter', gender=Gender.Male),
+    User(name='Ben', gender=Gender.Male),
 ])
 session.commit()
 
@@ -75,10 +76,18 @@ session.add_all([
 session.commit()
 
 # delete order by oid
-session.query(Order).filter(Order.oid == 5).delete()
+session.query(Order).filter(Order.oid == 4).delete()
+session.commit()
 
 # update order
 session.query(Order).filter(Order.oid == 1).update({'price': 3.5})
+session.commit()
 
 # join order and user
-print(session.query(Order.oid, User.name, Order.price).select_from(User).filter(User.uid == Order.uid).all())
+print(
+    session.query(User.name, Order.price)
+    .select_from(User)
+    .filter(User.uid == Order.uid)
+    .filter(Order.uid == 3)
+    .all()
+)
