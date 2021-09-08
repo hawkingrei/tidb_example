@@ -8,10 +8,22 @@ import (
 )
 
 type Order struct {
-	gorm.Model
-	ID       int     `gorm:"primary_key,autoIncrement"`
-	Username string  `gorm:"column:username"`
-	Price    float64 `gorm:"column:price"`
+	Oid   int     `gorm:"primary_key;autoIncrement:true"`
+	Uid   int     `gorm:"column:uid"`
+	Price float64 `gorm:"column:price"`
+}
+
+type GenderModel string
+
+const (
+	Female GenderModel = "Female"
+	Male   GenderModel = "Male"
+)
+
+type User struct {
+	Uid    int         `gorm:"primary_key;autoIncrement:true"`
+	Name   string      `gorm:"column:name"`
+	Gender GenderModel `sql:"type:gender_model"`
 }
 
 func PrintResult(tx *gorm.DB, result []Order) {
@@ -21,6 +33,20 @@ func PrintResult(tx *gorm.DB, result []Order) {
 		}
 	}
 }
+
+type JoinResult struct {
+	Name  string  `json:"name"`
+	Price float64 `json:"price"`
+}
+
+func PrintJoinResult(tx *gorm.DB, result []JoinResult) {
+	if tx.Error == nil && tx.RowsAffected > 0 {
+		for _, order := range result {
+			fmt.Printf("%+v\n", order)
+		}
+	}
+}
+
 func main() {
 	dsn := "root:@tcp(localhost:4000)/gorm?charset=utf8&parseTime=True&loc=Local"
 	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
@@ -30,20 +56,26 @@ func main() {
 
 	// Create table
 	db.AutoMigrate(&Order{})
+	db.AutoMigrate(&User{})
 
 	// Insert
-	db.Create(&Order{Username: "a", Price: 100})
-	db.Create(&Order{Username: "b", Price: 200})
-	db.Create(&Order{Username: "c", Price: 300})
-	db.Create(&Order{Username: "d", Price: 400})
-	db.Create(&Order{Username: "e", Price: 500})
+	db.Create(&Order{Uid: 1, Price: 100})
+	db.Create(&Order{Uid: 2, Price: 200})
+	db.Create(&Order{Uid: 2, Price: 300})
+	db.Create(&Order{Uid: 3, Price: 400})
+	db.Create(&Order{Uid: 4, Price: 500})
+
+	db.Create(&User{Name: "Alice", Gender: Female})
+	db.Create(&User{Name: "John", Gender: Male})
+	db.Create(&User{Name: "Ben", Gender: Male})
+	db.Create(&User{Name: "Aileen", Gender: Female})
 
 	// Delete
 	db.Delete(&Order{}, 1)
-	db.Where("Username = ?", "c").Delete(&Order{})
+	db.Where("uid = ?", 2).Delete(&Order{})
 
 	// Update
-	db.Model(&Order{}).Where("id = ?", 2).Update("Username", "hello")
+	db.Model(&Order{}).Where("id = ?", 2).Update("price", gorm.Expr("price * ? + ?", 2, 100))
 
 	var orders []Order
 	// Get all records
@@ -51,7 +83,7 @@ func main() {
 	PrintResult(result, orders)
 
 	// Get records with conditions
-	result = db.Where("username IN ?", []string{"b", "c", "d", "e"}).Find(&orders)
+	result = db.Where("uid IN ?", []int{2, 3}).Find(&orders)
 	PrintResult(result, orders)
 
 	result = db.Where("price >= ?", 300).Find(&orders)
@@ -59,4 +91,9 @@ func main() {
 
 	result = db.Raw("SELECT * FROM orders WHERE price = ?", 500).Scan(&orders)
 	PrintResult(result, orders)
+
+	var join_result []JoinResult
+	// join orders and users
+	result = db.Table("users").Select("orders.price as price, users.name as name").Joins("INNER JOIN orders ON orders.uid = users.uid").Where("users.uid = ?", 4).Find(&join_result)
+	PrintJoinResult(result, join_result)
 }
