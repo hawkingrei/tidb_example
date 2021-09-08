@@ -81,7 +81,7 @@ func main() {
 		fmt.Printf("%d %d %.2f\n", oid, cid, price)
 	}
 	// join
-	rows, err = db.Query("SELECT customer.name, orders.price FROM customer, orders WHERE customer.cid = orders.cid")
+	rows, err = db.Query("SELECT customer.name, orders.price FROM customer, orders WHERE customer.cid = orders.cid and orders.cid = 1")
 	if err != nil {
 		panic(err)
 	}
