@@ -23,9 +23,6 @@ urlpatterns = [
     path('admin/', admin.site.urls),
 
     url('ping/', PingView.as_view()),
-
-    url('order', OrderView.as_view(), name='order'),
-    url('order/<int:id>/', OrderView.as_view(), name='order'),
-
-     url('user/<int:id>/', UserView.as_view(), name='user'),
+    url('order/', OrderView.as_view()),
+    url('user/', UserView.as_view()),
 ]

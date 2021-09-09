@@ -30,16 +30,14 @@ class PingView(View):
 
 @method_decorator(csrf_exempt, name='dispatch')
 class OrderView(View):
-    def get(self, request, id=None, *args, **kwargs):
-        if id is None:
-            orders = list(Orders.objects.values())
-        else:
-            orders = list(Orders.objects.filter(oid=id).values())
+    def get(self, request, *args, **kwargs):
+        form_data = json.loads(request.body.decode())
+        oid = form_data['oid']
+        if oid is None:
+            return HttpResponse(status=404)
+        orders = list(Orders.objects.filter(oid=oid).values())
         return JsonResponse(orders, safe=False)
 
-
-    @retry_on_exception
-    @atomic
     def post(self, request, *args, **kwargs):
         form_data = json.loads(request.body.decode())
         uid = form_data['uid']
@@ -48,48 +46,33 @@ class OrderView(View):
         c.save()        
         return HttpResponse(status=200)
 
-    @retry_on_exception
-    @atomic
-    def delete(self, request, id=None, *args, **kwargs):
-        if id is None:
+    def delete(self, request, *args, **kwargs):
+        form_data = json.loads(request.body.decode())
+        oid = form_data['oid']
+        if oid is None:
             return HttpResponse(status=404)
-        Orders.objects.filter(id=id).delete()
+        Orders.objects.filter(oid=oid).delete()
         return HttpResponse(status=200)
 
-    @retry_on_exception
-    @atomic
-    def put(self, request, id=None, *args, **kwargs):
-        if id is None:
-            return HttpResponse(status=404)
+    def patch(self, request, *args, **kwargs):
         form_data = json.loads(request.body.decode())
-        price = form_data['price']
-        Orders.objects.filter(id=id).update(price=price)
-        return HttpResponse(status=200)
-
-    @retry_on_exception
-    @atomic
-    def patch(self, request, id=None, *args, **kwargs):
-        if id is None:
+        oid = form_data['oid']
+        if oid is None:
             return HttpResponse(status=404)
-        form_data = json.loads(request.body.decode())
         price = form_data['price']
-        Orders.objects.filter(id=id).update(price=price)
+        Orders.objects.filter(oid=oid).update(price=price)
         return HttpResponse(status=200)
 
 
 @method_decorator(csrf_exempt, name='dispatch')
 class UserView(View):
-    def get(self, request, id=None, *args, **kwargs):
-        if id is None:
+    def get(self, request, *args, **kwargs):
+        form_data = json.loads(request.body.decode())
+        uid = form_data['uid']
+        if uid is None:
             return HttpResponse(status=404)
-        users = list(Users.objects.filter(uid=id).values())
+        users = list(Users.objects.filter(uid=uid).values())
         return JsonResponse(users, safe=False)
-
-    def delete(self, request, id=None, *args, **kwargs):
-        if id is None:
-            return HttpResponse(status=404)
-        Users.objects.filter(uid=id).delete()
-        return HttpResponse(status=200)
 
     def post(self, request, *args, **kwargs):
         form_data = json.loads(request.body.decode())
