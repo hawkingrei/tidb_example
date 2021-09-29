@@ -75,7 +75,7 @@ func main() {
 	db.Where("uid = ?", 2).Delete(&Order{})
 
 	// Update
-	db.Model(&Order{}).Where("id = ?", 2).Update("price", gorm.Expr("price * ? + ?", 2, 100))
+	db.Model(&Order{}).Where("uid = ?", 2).Update("price", gorm.Expr("price * ? + ?", 2, 100))
 
 	var orders []Order
 	// Get all records
